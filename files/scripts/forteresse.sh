@@ -45,7 +45,7 @@ ajouter_pam() {  # ajouter_pam <fichier> <motif de la ligne aprÃ¨s laquelle insÃ
     awk -v motif="$motif" -v ligne="$LIGNE" '{print} !fait && $0 ~ motif {print ligne; fait=1}' "$f" > "$f.gcad"
     cat "$f.gcad" > "$f"; rm -f "$f.gcad"
 }
-ajouter_pam /etc/pam.d/gdm-password '^auth[[:space:]]+substack[[:space:]]+password-auth'
+ajouter_pam /etc/pam.d/gdm-password '^auth[[:space:]]+substack[[:space:]]+(gdm-password-auth-substack|password-auth)'
 ajouter_pam /etc/pam.d/login        '^auth[[:space:]]+(substack|include)[[:space:]]+system-auth'
 
 # Coupe-circuit VPN : le service est toujours actif, il ne bloque que si KILLSWITCH=1
