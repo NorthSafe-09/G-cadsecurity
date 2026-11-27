@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Foremost
+Comment=Extraire des fichiers d’une image disque
+Exec=bash -c "echo '=== Foremost : Extraire des fichiers d’une image disque ==='; echo; foremost -h 2>&1 | head -60; echo; exec bash"
+TryExec=foremost
+Icon=utilities-terminal
+Terminal=true
+Categories=X-GCAD-Forensique;

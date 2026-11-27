@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=ClamAV
+Comment=Antivirus en ligne de commande
+Exec=bash -c "echo '=== ClamAV : Antivirus en ligne de commande ==='; echo; clamscan --help 2>&1 | head -60; echo; exec bash"
+TryExec=clamscan
+Icon=utilities-terminal
+Terminal=true
+Categories=X-GCAD-Forensique;

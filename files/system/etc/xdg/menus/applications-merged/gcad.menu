@@ -29,4 +29,19 @@
       <Filename>org.wireshark.Wireshark.desktop</Filename>
     </Include>
   </Menu>
+  <Menu>
+    <Name>Enquête numérique</Name>
+    <Directory>gcad-forensique.directory</Directory>
+    <Include>
+      <Category>X-GCAD-Forensique</Category>
+    </Include>
+  </Menu>
+  <Menu>
+    <Name>IA</Name>
+    <Directory>gcad-ia.directory</Directory>
+    <Include>
+      <Category>X-GCAD-IA</Category>
+      <Filename>com.jeffser.Alpaca.desktop</Filename>
+    </Include>
+  </Menu>
 </Menu>

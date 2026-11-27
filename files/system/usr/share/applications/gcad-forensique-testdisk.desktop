@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=TestDisk
+Comment=Récupérer des partitions perdues
+Exec=bash -c "echo '=== TestDisk : Récupérer des partitions perdues ==='; echo; testdisk /help 2>&1 | head -60; echo; exec bash"
+TryExec=testdisk
+Icon=utilities-terminal
+Terminal=true
+Categories=X-GCAD-Forensique;

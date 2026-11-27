@@ -57,6 +57,19 @@ modules:
         - macchanger
         - whois
         - bind-utils
+        # Enquête numérique (forensique)
+        - sleuthkit
+        - testdisk
+        - foremost
+        - ddrescue
+        - dc3dd
+        - python3-volatility3
+        - yara
+        - clamav
+        - clamav-update
+        - hashdeep
+        # IA locale
+        - ollama
 
   # Image de marque, confidentialité par défaut, forteresse
   - type: script

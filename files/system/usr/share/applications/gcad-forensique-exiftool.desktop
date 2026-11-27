@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=ExifTool
+Comment=Lire les métadonnées d’un fichier
+Exec=bash -c "echo '=== ExifTool : Lire les métadonnées d’un fichier ==='; echo; exiftool -ver 2>&1 | head -60; echo; exec bash"
+TryExec=exiftool
+Icon=utilities-terminal
+Terminal=true
+Categories=X-GCAD-Forensique;

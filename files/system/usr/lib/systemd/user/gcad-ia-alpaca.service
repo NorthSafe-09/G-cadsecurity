@@ -1,0 +1,13 @@
+[Unit]
+Description=G-CAD : installe Alpaca (interface pour Ollama et autres IA) une seule fois
+Wants=network-online.target
+After=network-online.target
+ConditionPathExists=!%h/.local/share/gcad/alpaca-ok
+
+[Service]
+Type=oneshot
+ExecStartPre=/usr/bin/sleep 60
+ExecStart=/usr/bin/bash -c 'flatpak install --user --noninteractive -y flathub com.jeffser.Alpaca && mkdir -p %h/.local/share/gcad && touch %h/.local/share/gcad/alpaca-ok'
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=PhotoRec
+Comment=Récupérer des fichiers effacés
+Exec=bash -c "echo '=== PhotoRec : Récupérer des fichiers effacés ==='; echo; photorec /help 2>&1 | head -60; echo; exec bash"
+TryExec=photorec
+Icon=utilities-terminal
+Terminal=true
+Categories=X-GCAD-Forensique;

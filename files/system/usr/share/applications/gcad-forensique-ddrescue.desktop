@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=GNU ddrescue
+Comment=Copie bit à bit d’un disque abîmé
+Exec=bash -c "echo '=== GNU ddrescue : Copie bit à bit d’un disque abîmé ==='; echo; ddrescue --help 2>&1 | head -60; echo; exec bash"
+TryExec=ddrescue
+Icon=utilities-terminal
+Terminal=true
+Categories=X-GCAD-Forensique;

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Sleuth Kit
+Comment=Analyse de disques et de partitions
+Exec=bash -c "echo '=== Sleuth Kit : Analyse de disques et de partitions ==='; echo; fls -V 2>&1 | head -60; echo; exec bash"
+TryExec=fls
+Icon=utilities-terminal
+Terminal=true
+Categories=X-GCAD-Forensique;

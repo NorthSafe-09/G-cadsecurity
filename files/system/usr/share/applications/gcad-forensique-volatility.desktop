@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Volatility 3
+Comment=Analyse de la mémoire vive
+Exec=bash -c "echo '=== Volatility 3 : Analyse de la mémoire vive ==='; echo; vol -h 2>&1 | head -60; echo; exec bash"
+TryExec=vol
+Icon=utilities-terminal
+Terminal=true
+Categories=X-GCAD-Forensique;

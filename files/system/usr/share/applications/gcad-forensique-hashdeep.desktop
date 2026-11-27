@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Hashdeep
+Comment=Empreintes pour prouver qu’une preuve est intacte
+Exec=bash -c "echo '=== Hashdeep : Empreintes pour prouver qu’une preuve est intacte ==='; echo; hashdeep -h 2>&1 | head -60; echo; exec bash"
+TryExec=hashdeep
+Icon=utilities-terminal
+Terminal=true
+Categories=X-GCAD-Forensique;
