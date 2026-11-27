@@ -14,6 +14,10 @@ on:
         description: "Construire aussi l'ISO pour les clés USB"
         type: boolean
         default: true
+      iso_seulement:
+        description: "ISO seulement (réutiliser la dernière image, sans la reconstruire)"
+        type: boolean
+        default: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
@@ -22,6 +26,7 @@ concurrency:
 jobs:
   image:
     name: Construire l'image G-CAD Security
+    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.iso_seulement) }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -39,7 +44,7 @@ jobs:
   iso:
     name: Construire l'ISO (clé USB live + installation)
     needs: image
-    if: (github.event_name == 'workflow_dispatch' && inputs.construire_iso) || startsWith(github.ref, 'refs/tags/v')
+    if: ${{ always() && (needs.image.result == 'success' || needs.image.result == 'skipped') && ((github.event_name == 'workflow_dispatch' && (inputs.construire_iso || inputs.iso_seulement)) || startsWith(github.ref, 'refs/tags/v')) }}
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -71,14 +76,20 @@ jobs:
         shell: bash
         run: |
           LIVE_IMAGE="localhost/gcad-live:${{ github.sha }}"
+          # L'image est exportée en archive et montée en lecture seule dans la
+          # construction : rien n'est copié dans les couches de l'image live.
+          sudo podman save --format oci-archive -o "$RUNNER_TEMP/gcad.tar" '${{ steps.ref.outputs.IMAGE_REF }}'
           sudo podman build \
             --cap-add sys_admin \
             --security-opt label=disable \
-            --volume /var/lib/containers/storage:/usr/lib/containers/storage:ro \
+            --volume "$RUNNER_TEMP/gcad.tar:/tmp/gcad.tar:ro" \
             --build-arg IMAGE_REF='${{ steps.ref.outputs.IMAGE_REF }}' \
             --tag "$LIVE_IMAGE" \
             ./live
           echo "LIVE_IMAGE=$LIVE_IMAGE" >> "$GITHUB_OUTPUT"
+          # Libère de la place pour la génération de l'ISO
+          sudo rm -f "$RUNNER_TEMP/gcad.tar"
+          sudo podman rmi '${{ steps.ref.outputs.IMAGE_REF }}' || true
 
       - name: Générer l'ISO
         id: iso

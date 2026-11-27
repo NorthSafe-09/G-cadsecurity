@@ -11,20 +11,30 @@ mount -o remount,rw /proc/sys || :
 
 # 1. Embarque l'image complète de G-CAD Security dans la clé,
 #    pour que l'installation marche sans Internet.
-# Copie depuis le stockage de l'hôte (monté par le workflow) : pas de
+# Copie depuis l'archive montée par le workflow : pas de
 # téléchargement, et pas de refus par la politique de signature de secureblue.
 command -v skopeo >/dev/null || dnf install -y skopeo
 skopeo --insecure-policy copy \
-    "containers-storage:[overlay@/usr/lib/containers/storage]$IMAGE_REF" \
+    "oci-archive:/tmp/gcad.tar" \
     "containers-storage:$IMAGE_REF"
 
 # 2. Initramfs capable de démarrer en mode live
 # secureblue bloque le module squashfs, indispensable au démarrage live
 # (même méthode que les ISO officielles de secureblue).
 ldconfig
-sed -i '/^install squashfs /d' /usr/lib/modprobe.d/secureblue.conf
-echo 'install squashfs /sbin/modprobe --ignore-install squashfs' > /etc/modprobe.d/zz-squashfs-override.conf
+# squashfs (système live) et cdrom/sr_mod (lecteur DVD virtuel de VirtualBox)
+sed -i -E '/^install (squashfs|cdrom|sr_mod) /d' /usr/lib/modprobe.d/secureblue.conf
+printf 'install %s /sbin/modprobe --ignore-install %s\n' squashfs squashfs cdrom cdrom sr_mod sr_mod > /etc/modprobe.d/zz-squashfs-override.conf
 echo 'install_items+=" /usr/lib64/libno_rlimit_as.so /etc/ld.so.cache /etc/modprobe.d/zz-squashfs-override.conf "' > /etc/dracut.conf.d/libs.conf
+# Noyau Fedora pour la session live (comme les ISO officielles de secureblue) :
+# signé pour Secure Boot et compatible VirtualBox. Le système installé garde
+# le noyau renforcé de secureblue.
+dnf -y versionlock delete kernel kernel-core kernel-modules kernel-modules-core kernel-modules-extra || :
+dnf --setopt=protect_running_kernel=False -y remove kernel kernel-core kernel-modules kernel-modules-core kernel-modules-extra
+rm -rf /usr/lib/modules/*
+dnf -y --repo fedora,updates --setopt=tsflags=noscripts install kernel kernel-core kernel-modules-extra
+depmod "$(ls /usr/lib/modules)"
+dnf -y install virtualbox-guest-additions || :
 dnf install -y dracut-live
 kernel=$(kernel-install list --json pretty | jq -r '.[] | select(.has_kernel == true) | .version')
 DRACUT_NO_XATTR=1 dracut -v --force --zstd --reproducible --no-hostonly \
@@ -32,8 +42,12 @@ DRACUT_NO_XATTR=1 dracut -v --force --zstd --reproducible --no-hostonly \
     "/usr/lib/modules/${kernel}/initramfs.img" "${kernel}"
 
 # Pas d'installations en arrière-plan dans la session d'essai
-systemctl disable --global secureblue-flatpak-setup.service secureblue-flatpak-setup.timer secureblue-bazaar-setup.timer gcad-ia-alpaca.service 2>/dev/null || true
-systemctl disable rpm-ostreed-automatic.timer 2>/dev/null || true
+for u in secureblue-flatpak-setup.service secureblue-flatpak-setup.timer secureblue-bazaar-setup.timer gcad-ia-alpaca.service podman-auto-update.timer; do
+    systemctl disable --global "$u" 2>/dev/null || :
+done
+for u in rpm-ostreed-automatic.timer rpm-ostree-countme.timer bootloader-update.service; do
+    systemctl disable "$u" 2>/dev/null || :
+done
 
 # 3. Session live GNOME
 dnf install -y livesys-scripts

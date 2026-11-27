@@ -12,6 +12,16 @@ source /etc/os-release
 dnf install -qy --allowerasing anaconda-live libblockdev-{btrfs,lvm,dm}
 mkdir -p /var/lib/rpm-state
 
+# Corrections de la session live, reprises des ISO officielles de secureblue
+dnf reinstall -y polkit                                   # secureblue retire pkexec
+sed -i '/^UMASK[[:blank:]]/s/027/022/' /etc/login.defs
+if [[ -L /mnt ]]; then rm -f /mnt && mkdir -m 0755 /mnt; fi # Anaconda a besoin de /mnt/sysroot
+# L'installateur doit pouvoir lire l'image embarquée (session live seulement ;
+# le système installé garde sa politique de signature stricte).
+mkdir -p /etc/containers
+jq '.transports["containers-storage"][""]=[{"type":"insecureAcceptAnything"}]' \
+    /usr/share/containers/policy.json > /etc/containers/policy.json
+
 # Profil Anaconda : partitionnement Btrfs, pas d'écran réseau ni mot de passe root
 mkdir -p /etc/anaconda/profile.d
 cat >/etc/anaconda/profile.d/gcad.conf <<EOF
