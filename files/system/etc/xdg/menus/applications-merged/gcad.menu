@@ -1,0 +1,32 @@
+<!DOCTYPE Menu PUBLIC "-//freedesktop//DTD Menu 1.0//EN"
+ "http://www.freedesktop.org/standards/menu-spec/1.0/menu.dtd">
+<!-- Menu « Applications » G-CAD, classé par catégories (style Parrot OS) -->
+<Menu>
+  <Name>Applications</Name>
+  <Menu>
+    <Name>G-CAD Security</Name>
+    <Directory>gcad.directory</Directory>
+    <Include>
+      <Filename>gcad-centre.desktop</Filename>
+      <Filename>gcad-fake-travel.desktop</Filename>
+      <Filename>io.github.kolunmi.Bazaar.desktop</Filename>
+    </Include>
+  </Menu>
+  <Menu>
+    <Name>Vie privée</Name>
+    <Directory>gcad-vieprivee.directory</Directory>
+    <Include>
+      <Filename>org.keepassxc.KeePassXC.desktop</Filename>
+      <Filename>torbrowser.desktop</Filename>
+      <Filename>org.onionshare.OnionShare.desktop</Filename>
+    </Include>
+  </Menu>
+  <Menu>
+    <Name>Pentest</Name>
+    <Directory>gcad-pentest.directory</Directory>
+    <Include>
+      <Category>X-GCAD-Pentest</Category>
+      <Filename>org.wireshark.Wireshark.desktop</Filename>
+    </Include>
+  </Menu>
+</Menu>

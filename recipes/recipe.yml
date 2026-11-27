@@ -29,6 +29,34 @@ modules:
         - yad # fenêtres du Centre G-CAD, du code des ports et de Fake Travel
         - plymouth-plugin-script # écran de mot de passe au démarrage
         - nftables # coupe-circuit VPN
+        - gnome-shell-extension-apps-menu # menu Applications par catégories (style Parrot)
+        - gnome-shell-extension-places-menu # menu Emplacements
+
+  # Vie privée + outils de test d'intrusion (style Parrot OS).
+  # skip-unavailable : un outil retiré de Fedora ne bloque pas la construction.
+  - type: dnf
+    install:
+      skip-unavailable: true
+      packages:
+        - keepassxc # coffre de mots de passe hors ligne
+        - torbrowser-launcher # Tor Browser officiel
+        - onionshare # partage de fichiers par Tor
+        - nmap
+        - nmap-ncat
+        - masscan
+        - wireshark
+        - tcpdump
+        - aircrack-ng
+        - john
+        - hashcat
+        - hydra
+        - sqlmap
+        - nikto
+        - ettercap
+        - binwalk
+        - macchanger
+        - whois
+        - bind-utils
 
   # Image de marque, confidentialité par défaut, forteresse
   - type: script
@@ -36,6 +64,7 @@ modules:
       - branding.sh
       - confidentialite.sh
       - forteresse.sh
+      - menu.sh
 
   # Installe la politique de signature pour que les PC clients
   # n'acceptent que les mises à jour signées avec TA clé
