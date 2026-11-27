@@ -1,13 +1,16 @@
 [Unit]
 Description=G-CAD : installe Alpaca (interface pour Ollama et autres IA) une seule fois
-Wants=network-online.target
-After=network-online.target
+After=secureblue-flatpak-setup.service
+ConditionUser=!@system
 ConditionPathExists=!%h/.local/share/gcad/alpaca-ok
+StartLimitIntervalSec=0
 
 [Service]
 Type=oneshot
-ExecStartPre=/usr/bin/sleep 60
-ExecStart=/usr/bin/bash -c 'flatpak install --user --noninteractive -y flathub com.jeffser.Alpaca && mkdir -p %h/.local/share/gcad && touch %h/.local/share/gcad/alpaca-ok'
+ExecStart=/usr/bin/bash -c 'flatpak remotes --user --columns=name | grep -qx flathub && flatpak install --user --noninteractive -y flathub com.jeffser.Alpaca'
+ExecStartPost=/usr/bin/bash -c 'mkdir -p %h/.local/share/gcad && touch %h/.local/share/gcad/alpaca-ok'
+Restart=on-failure
+RestartSec=60
 
 [Install]
 WantedBy=default.target

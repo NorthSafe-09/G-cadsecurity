@@ -38,19 +38,20 @@ if [[ "$action" == Navigateur* ]]; then
     fi
     profil=$(mktemp -d "${XDG_RUNTIME_DIR:-/tmp}/gcad-nav-XXXXXX")
     trap 'rm -rf "$profil"' EXIT
-    trivalent --user-data-dir="$profil" --incognito --no-first-run --new-window about:blank
+    trivalent --user-data-dir="$profil" --disk-cache-size=52428800 --no-first-run --new-window about:blank
     exit 0
 fi
 
-bw=(bwrap --unshare-all --die-with-parent --new-session
+bw=(bwrap --unshare-all --die-with-parent
     --ro-bind /usr /usr --symlink usr/lib /lib --symlink usr/lib64 /lib64
     --symlink usr/bin /bin --symlink usr/sbin /sbin --ro-bind /etc /etc
     --proc /proc --dev /dev --tmpfs /tmp --tmpfs /run --tmpfs /var
+    --ro-bind-try /var/lib/clamav /var/lib/clamav
     --tmpfs "$HOME" --setenv HOME "$HOME" --chdir "$HOME"
     --setenv PS1 '[bac-à-sable] \w \$ ')
 
 if [[ "$reseau" == Internet* ]]; then
-    bw+=(--share-net --ro-bind-try /run/systemd/resolve /run/systemd/resolve)
+    bw+=(--share-net --ro-bind "$(realpath /etc/resolv.conf)" /etc/resolv.conf)
     msg="Bac à sable : Internet par VPN seulement. Tout sera effacé à la fermeture."
 else
     msg="Bac à sable : ZÉRO connexion. Tout sera effacé à la fermeture."
@@ -63,4 +64,4 @@ if [[ "$action" == Examiner* ]]; then
     msg+="\nFichier en lecture seule dans ~/suspect. Outils : file, exiftool, strings, yara, clamscan."
 fi
 
-exec ptyxis --new-window -- "${bw[@]}" bash -c "printf '%b\n\n' \"$msg\"; exec bash --norc"
+exec ptyxis --new-window -- "${bw[@]}" bash -c 'printf "%b\n\n" "$1"; exec bash --norc' _ "$msg"

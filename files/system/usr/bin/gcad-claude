@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Claude dans sa propre fenêtre, avec un profil Trivalent séparé (cookies isolés).
+profil="$HOME/.local/share/gcad/claude"
+mkdir -p "$profil"
+exec trivalent --app=https://claude.ai --user-data-dir="$profil" --class=gcad-claude --no-first-run

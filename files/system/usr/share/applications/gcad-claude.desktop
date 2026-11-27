@@ -2,8 +2,9 @@
 Type=Application
 Name=Claude
 Comment=Assistant IA Claude, dans une fenêtre et un profil séparés
-Exec=bash -c 'mkdir -p "$HOME/.local/share/gcad/claude" && exec trivalent --app=https://claude.ai --user-data-dir="$HOME/.local/share/gcad/claude" --no-first-run'
+Exec=gcad-claude
 TryExec=trivalent
+StartupWMClass=gcad-claude
 Icon=internet-chat
 Categories=X-GCAD-IA;
 Keywords=ia;ai;assistant;claude;
