@@ -4,10 +4,11 @@
 # et de Fedora s'en servent pour fonctionner.
 set -euo pipefail
 
-OS_NAME="G-CAD Security"
+OS_NAME="GCAD OS"
 
 OS_RELEASE=/usr/lib/os-release
 sed -i "s/^PRETTY_NAME=.*/PRETTY_NAME=\"${OS_NAME}\"/" "$OS_RELEASE"
+sed -i "s/^NAME=.*/NAME=\"${OS_NAME}\"/" "$OS_RELEASE"
 for cle in VARIANT LOGO; do sed -i "/^${cle}=/d" "$OS_RELEASE"; done
 cat >> "$OS_RELEASE" <<EOF
 VARIANT="${OS_NAME}"

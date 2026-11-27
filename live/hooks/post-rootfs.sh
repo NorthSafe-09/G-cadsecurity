@@ -73,7 +73,12 @@ hidden_webui_pages =
 use_geolocation = False
 EOF
 
-echo "G-CAD Security" >/etc/system-release
+echo "GCAD OS" >/etc/system-release
+# Nom du système partout (fenêtre d'accueil de l'installateur incluse)
+for osr in /usr/lib/os-release /etc/os-release; do
+    [[ -f "$osr" ]] || continue
+    sed -i 's/^NAME=.*/NAME="GCAD OS"/;s/^PRETTY_NAME=.*/PRETTY_NAME="GCAD OS"/' "$osr"
+done
 
 # Kickstart : installe l'image embarquée dans la clé (hors ligne),
 # puis fait pointer les mises à jour vers l'image signée en ligne.
