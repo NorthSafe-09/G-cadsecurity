@@ -44,4 +44,13 @@
       <Filename>com.jeffser.Alpaca.desktop</Filename>
     </Include>
   </Menu>
+  <Menu>
+    <Name>Bacs à sable</Name>
+    <Directory>gcad-sandbox.directory</Directory>
+    <Include>
+      <Category>X-GCAD-Sandbox</Category>
+      <Filename>bubblejail-config.desktop</Filename>
+      <Filename>press.freedom.dangerzone.desktop</Filename>
+    </Include>
+  </Menu>
 </Menu>

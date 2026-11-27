@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Bac à sable G-CAD
+Comment=Environnement isolé et jetable : zéro connexion ou VPN seulement
+Exec=gcad-bac-a-sable
+Icon=security-high
+Categories=X-GCAD-Sandbox;
+Keywords=sandbox;isolé;jetable;hors ligne;suspect;

@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+# Bac à sable G-CAD : lance un environnement isolé et jetable.
+#  - Système en lecture seule, dossier personnel vide (rien de tes fichiers n'est visible)
+#  - Tout est effacé à la fermeture
+#  - Réseau au choix : ZÉRO connexion, ou Internet par VPN seulement
+# Repose sur bubblewrap (la même isolation que Flatpak).
+set -uo pipefail
+source /usr/libexec/gcad/commun.sh
+YAD=(yad --center --window-icon=gcad --image=gcad --title="Bac à sable G-CAD")
+
+vpn_actif() {
+    ip -o link show up 2>/dev/null | grep -Eq ': (tun|wg|tap|ppp|proton|mullvad|nordlynx)[^:]*:'
+}
+
+choix=$("${YAD[@]}" --form --width=520 \
+    --text="<b>Bac à sable isolé et jetable</b>\nTes fichiers restent invisibles. Tout est effacé à la fermeture." \
+    --field="Réseau:CB" "Zéro connexion (hors ligne total)!Internet par VPN seulement" \
+    --field="Ouvrir:CB" "Terminal isolé!Examiner un fichier suspect (toujours hors ligne)!Navigateur jetable" \
+    --button="Annuler:1" --button="Lancer:0") || exit 0
+IFS='|' read -r reseau action _ <<<"$choix"
+
+# Un fichier suspect ne voit JAMAIS Internet
+[[ "$action" == Examiner* ]] && reseau="Zéro connexion (hors ligne total)"
+
+if [[ "$reseau" == Internet* ]]; then
+    if [[ "$KILLSWITCH" != 1 ]] || ! vpn_actif; then
+        "${YAD[@]}" --text="<b>Refusé :</b> le mode Internet exige le VPN connecté ET le coupe-circuit actif (Centre G-CAD).\n\nAucune donnée ne peut sortir hors du VPN." --button="OK:0"
+        exit 1
+    fi
+fi
+
+# Navigateur jetable : profil neuf, détruit à la fermeture. Le navigateur garde
+# son propre bac à sable ; le coupe-circuit empêche toute sortie hors VPN.
+if [[ "$action" == Navigateur* ]]; then
+    if [[ "$reseau" == Zéro* ]]; then
+        "${YAD[@]}" --text="Un navigateur sans connexion ne sert à rien : choisis « Internet par VPN seulement »." --button="OK:0"
+        exit 1
+    fi
+    profil=$(mktemp -d "${XDG_RUNTIME_DIR:-/tmp}/gcad-nav-XXXXXX")
+    trap 'rm -rf "$profil"' EXIT
+    trivalent --user-data-dir="$profil" --incognito --no-first-run --new-window about:blank
+    exit 0
+fi
+
+bw=(bwrap --unshare-all --die-with-parent --new-session
+    --ro-bind /usr /usr --symlink usr/lib /lib --symlink usr/lib64 /lib64
+    --symlink usr/bin /bin --symlink usr/sbin /sbin --ro-bind /etc /etc
+    --proc /proc --dev /dev --tmpfs /tmp --tmpfs /run --tmpfs /var
+    --tmpfs "$HOME" --setenv HOME "$HOME" --chdir "$HOME"
+    --setenv PS1 '[bac-à-sable] \w \$ ')
+
+if [[ "$reseau" == Internet* ]]; then
+    bw+=(--share-net --ro-bind-try /run/systemd/resolve /run/systemd/resolve)
+    msg="Bac à sable : Internet par VPN seulement. Tout sera effacé à la fermeture."
+else
+    msg="Bac à sable : ZÉRO connexion. Tout sera effacé à la fermeture."
+fi
+
+if [[ "$action" == Examiner* ]]; then
+    fichier=$(yad --file --center --title="Fichier suspect à examiner") || exit 0
+    [[ -f "$fichier" ]] || exit 0
+    bw+=(--ro-bind "$fichier" "$HOME/suspect/$(basename "$fichier")")
+    msg+="\nFichier en lecture seule dans ~/suspect. Outils : file, exiftool, strings, yara, clamscan."
+fi
+
+exec ptyxis --new-window -- "${bw[@]}" bash -c "printf '%b\n\n' \"$msg\"; exec bash --norc"
