@@ -46,7 +46,7 @@ ajouter_pam() {  # ajouter_pam <fichier> <motif de la ligne après laquelle ins�
     cat "$f.gcad" > "$f"; rm -f "$f.gcad"
 }
 ajouter_pam /etc/pam.d/gdm-password '^auth[[:space:]]+substack[[:space:]]+(gdm-password-auth-substack|password-auth)'
-ajouter_pam /etc/pam.d/login        '^auth[[:space:]]+(substack|include)[[:space:]]+system-auth'
+( ajouter_pam /etc/pam.d/login '^auth[[:space:]]+(substack|include)[[:space:]]+system-auth' ) || echo "AVERTISSEMENT : gardien non ajouté à la console texte" >&2
 
 # Coupe-circuit VPN : le service est toujours actif, il ne bloque que si KILLSWITCH=1
 systemctl enable gcad-killswitch.service

@@ -46,5 +46,15 @@ dconf update || true
 # Le thème doit être inclus dans l'initramfs, qu'on régénère donc ici.
 plymouth-set-default-theme gcad
 KVER="$(find /usr/lib/modules -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | head -1)"
-DRACUT_NO_XATTR=1 dracut --no-hostonly --kver "$KVER" --reproducible --zstd -v --force \
-    --add plymouth "/usr/lib/modules/${KVER}/initramfs.img"
+# Même appel que secureblue (ostree indispensable au démarrage, hardened_malloc),
+# avec en plus le thème plymouth.
+shopt -s nullglob
+EXTRA=(/usr/lib64/libhardened_malloc.so /usr/lib64/glibc-hwcaps/*/libhardened_malloc.so)
+shopt -u nullglob
+DRACUT_NO_XATTR=1 dracut --kver "$KVER" --force \
+    --add 'ostree plymouth' \
+    --install "${EXTRA[*]}" \
+    --remove '/usr/lib/systemd/system.conf.d/40-hardened_malloc.conf' \
+    --no-hostonly --reproducible \
+    "/usr/lib/modules/${KVER}/initramfs.img"
+chmod 0600 "/usr/lib/modules/${KVER}/initramfs.img"

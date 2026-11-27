@@ -42,7 +42,7 @@ r=$("${YAD[@]}" --form --width=460 \
 code=$?
 
 if [[ $code -eq 2 ]]; then
-    pkexec /usr/libexec/gcad/centre-root faketravel off &&
+    run0 /usr/libexec/gcad/centre-root faketravel off &&
         notify-send -i gcad "Fake Travel" "Position réelle rétablie."
     exit 0
 fi
@@ -58,7 +58,7 @@ if [[ "$dest" != "Coordonnées personnalisées" ]]; then
 fi
 [[ "$fuseau" == TRUE ]] || tz="-"
 
-if pkexec /usr/libexec/gcad/centre-root faketravel "$lat" "$lon" "$tz"; then
+if run0 /usr/libexec/gcad/centre-root faketravel "$lat" "$lon" "$tz"; then
     notify-send -i gcad "Fake Travel" "Position simulée : $dest"
 else
     "${YAD[@]}" --image=dialog-error --text="Impossible d'appliquer cette position (coordonnées invalides ?)." --button="OK:0"

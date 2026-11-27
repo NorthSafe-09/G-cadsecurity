@@ -3,7 +3,7 @@
 # Chaque modification demande le mot de passe administrateur.
 source /usr/libexec/gcad/commun.sh
 
-ROOT=(pkexec /usr/libexec/gcad/centre-root)
+ROOT=(run0 /usr/libexec/gcad/centre-root)
 YAD=(yad --center --window-icon=gcad --image=gcad --title="Centre G-CAD")
 
 recharger() { source /usr/libexec/gcad/commun.sh; }
@@ -118,7 +118,7 @@ while :; do
             if [[ "$MODE" == arme ]]; then
                 erreur "Passe d'abord en mode TEST : en mode ARMÉ, le test effacerait tout."
             else
-                pkexec /usr/libexec/gcad/effacer "test manuel depuis le Centre G-CAD"
+                run0 /usr/libexec/gcad/effacer "test manuel depuis le Centre G-CAD"
             fi ;;
     esac
 done

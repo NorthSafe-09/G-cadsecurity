@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Actions privilégiées du Centre G-CAD et de Fake Travel (lancé via pkexec :
+# Actions privilégiées du Centre G-CAD et de Fake Travel (lancé via run0 :
 # le mot de passe administrateur est demandé à chaque fois).
 set -euo pipefail
 source /usr/libexec/gcad/commun.sh
 
-[[ $EUID -eq 0 ]] || { echo "Doit être lancé avec pkexec." >&2; exit 1; }
+[[ $EUID -eq 0 ]] || { echo "Doit être lancé avec run0." >&2; exit 1; }
 install -d -m 755 "$GCAD_ETC"; install -d -m 700 "$GCAD_VAR"
 CONF="$GCAD_ETC/reglages.conf"
 touch "$CONF"; chmod 644 "$CONF"
