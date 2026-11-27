@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# Mode anonyme G-CAD (équivalent d'AnonSurf sur Parrot OS).
+# Actif : TOUT le trafic du PC passe par Tor.
+#  - Connexions TCP redirigées vers le port transparent de Tor
+#  - Requêtes DNS redirigées vers le DNS de Tor (aucune fuite DNS)
+#  - IPv6 et tout le reste (UDP, ICMP…) bloqués
+#  - Seul le service Tor (utilisateur gcad-tor) sort sur le réseau
+# Compatible avec le coupe-circuit VPN : si le VPN est actif, Tor passe dans le VPN.
+# Usage (root, via run0) : anonyme on | off | etat
+set -uo pipefail
+source /usr/libexec/gcad/commun.sh
+TABLE=gcad_anonyme
+SERVICE=gcad-anonyme-tor.service
+
+[[ $EUID -eq 0 ]] || { echo "Doit être lancé avec run0." >&2; exit 1; }
+
+case "${1:-etat}" in
+on)
+    systemctl start "$SERVICE" || { echo "Tor n'a pas démarré." >&2; exit 1; }
+    nft delete table inet "$TABLE" 2>/dev/null || true
+    nft -f - <<'EOF' || { systemctl stop gcad-anonyme-tor.service; echo "Règles refusées." >&2; exit 1; }
+table inet gcad_anonyme {
+  chain nat_sortie {
+    type nat hook output priority -100;
+    meta skuid "gcad-tor" return
+    oifname "lo" return
+    ip daddr 127.0.0.0/8 return
+    udp dport 53 redirect to :5353
+    meta l4proto tcp ip daddr != 127.0.0.0/8 redirect to :9040
+  }
+  chain filtre_sortie {
+    type filter hook output priority 0; policy drop;
+    oifname "lo" accept
+    meta skuid "gcad-tor" accept
+    udp sport 68 udp dport 67 accept
+  }
+}
+EOF
+    journal "Mode anonyme (Tor) : activé"
+    echo "actif"
+    ;;
+off)
+    nft delete table inet "$TABLE" 2>/dev/null || true
+    systemctl stop "$SERVICE" 2>/dev/null || true
+    journal "Mode anonyme (Tor) : désactivé"
+    echo "inactif"
+    ;;
+etat)
+    if nft list table inet "$TABLE" >/dev/null 2>&1; then echo "actif"; else echo "inactif"; fi
+    ;;
+*)
+    echo "Usage : anonyme on|off|etat" >&2; exit 1 ;;
+esac

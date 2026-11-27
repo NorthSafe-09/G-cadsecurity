@@ -16,6 +16,7 @@
     <Name>Vie privée</Name>
     <Directory>gcad-vieprivee.directory</Directory>
     <Include>
+      <Category>X-GCAD-ViePrivee</Category>
       <Filename>org.keepassxc.KeePassXC.desktop</Filename>
       <Filename>torbrowser.desktop</Filename>
       <Filename>org.onionshare.OnionShare.desktop</Filename>

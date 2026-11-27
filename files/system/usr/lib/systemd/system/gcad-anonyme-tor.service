@@ -1,0 +1,17 @@
+[Unit]
+Description=G-CAD : Tor pour le mode anonyme
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=gcad-tor
+Group=gcad-tor
+StateDirectory=gcad-tor
+StateDirectoryMode=0700
+ExecStart=/usr/bin/tor -f /usr/share/gcad/anonyme.torrc --RunAsDaemon 0
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+Restart=on-failure

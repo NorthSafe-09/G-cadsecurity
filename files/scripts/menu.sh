@@ -6,7 +6,7 @@ set -euo pipefail
 cat > /etc/dconf/db/local.d/60-gcad-menu <<'FIN'
 [org/gnome/shell]
 enabled-extensions=['apps-menu@gnome-shell-extensions.gcampax.github.com', 'places-menu@gnome-shell-extensions.gcampax.github.com']
-favorite-apps=['gcad-centre.desktop', 'gcad-bac-a-sable.desktop', 'gcad-claude.desktop', 'io.github.kolunmi.Bazaar.desktop', 'trivalent.desktop', 'org.gnome.Nautilus.desktop', 'org.gnome.Ptyxis.desktop', 'gcad-fake-travel.desktop', 'org.gnome.Settings.desktop']
+favorite-apps=['gcad-centre.desktop', 'gcad-bac-a-sable.desktop', 'gcad-anonyme.desktop', 'gcad-claude.desktop', 'io.github.kolunmi.Bazaar.desktop', 'trivalent.desktop', 'org.gnome.Nautilus.desktop', 'org.gnome.Ptyxis.desktop', 'gcad-fake-travel.desktop', 'org.gnome.Settings.desktop']
 FIN
 dconf update || true
 

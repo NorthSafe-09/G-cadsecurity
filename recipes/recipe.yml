@@ -70,6 +70,10 @@ modules:
         - hashdeep
         # IA locale
         - ollama
+        # Mode anonyme (tout le PC par Tor) et GitHub
+        - tor
+        - git
+        - gh
 
   # Image de marque, confidentialité par défaut, forteresse
   - type: script

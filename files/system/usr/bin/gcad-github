@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# GitHub dans sa propre fenêtre, avec un profil Trivalent séparé.
+profil="$HOME/.local/share/gcad/github"
+mkdir -p "$profil"
+exec trivalent --app=https://github.com --user-data-dir="$profil" --class=gcad-github --no-first-run

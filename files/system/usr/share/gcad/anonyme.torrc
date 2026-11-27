@@ -1,0 +1,9 @@
+# Tor du mode anonyme G-CAD (tout le PC passe par Tor)
+DataDirectory /var/lib/gcad-tor
+SocksPort 127.0.0.1:9050
+TransPort 127.0.0.1:9040
+DNSPort 127.0.0.1:5353
+VirtualAddrNetworkIPv4 10.192.0.0/10
+AutomapHostsOnResolve 1
+ClientUseIPv6 0
+Log notice syslog

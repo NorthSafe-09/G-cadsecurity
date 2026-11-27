@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=GitHub
+Comment=GitHub dans une fenêtre et un profil séparés (outil gh et git inclus)
+Exec=gcad-github
+TryExec=trivalent
+StartupWMClass=gcad-github
+Icon=folder-remote
+Categories=X-GCAD-IA;
+Keywords=github;git;code;dépôt;
