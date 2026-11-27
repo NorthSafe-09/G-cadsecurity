@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Strings
+Comment=Texte lisible caché dans un fichier
+Exec=bash -c "echo '=== Strings : Texte lisible caché dans un fichier ==='; echo; strings --help 2>&1 | head -60; echo; exec bash"
+TryExec=strings
+Icon=utilities-terminal
+Terminal=true
+Categories=X-GCAD-Forensique;

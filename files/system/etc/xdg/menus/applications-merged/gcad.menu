@@ -31,10 +31,12 @@
     </Include>
   </Menu>
   <Menu>
-    <Name>Enquête numérique</Name>
+    <Name>Cybercriminalité</Name>
     <Directory>gcad-forensique.directory</Directory>
     <Include>
       <Category>X-GCAD-Forensique</Category>
+      <Filename>guymager.desktop</Filename>
+      <Filename>org.gnome.GHex.desktop</Filename>
     </Include>
   </Menu>
   <Menu>

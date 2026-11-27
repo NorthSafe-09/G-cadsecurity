@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Bulk Extractor
+Comment=Extraire courriels, numéros de carte, URL d’une image disque
+Exec=bash -c "echo '=== Bulk Extractor : Extraire courriels, numéros de carte, URL d’une image disque ==='; echo; bulk_extractor -h 2>&1 | head -60; echo; exec bash"
+TryExec=bulk_extractor
+Icon=utilities-terminal
+Terminal=true
+Categories=X-GCAD-Forensique;

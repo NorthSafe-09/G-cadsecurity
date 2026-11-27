@@ -68,6 +68,11 @@ modules:
         - clamav
         - clamav-update
         - hashdeep
+        - guymager # copie de disque de preuve, en interface graphique
+        - ghex # éditeur hexadécimal
+        - bulk_extractor
+        - libewf-tools # format de preuve E01
+        - binutils # strings
         # IA locale
         - ollama
         # Mode anonyme (tout le PC par Tor) et GitHub

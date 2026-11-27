@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=EWF (E01)
+Comment=Créer et vérifier des images de preuve au format E01
+Exec=bash -c "echo '=== EWF (E01) : Créer et vérifier des images de preuve au format E01 ==='; echo; ewfacquire -h 2>&1 | head -60; echo; exec bash"
+TryExec=ewfacquire
+Icon=utilities-terminal
+Terminal=true
+Categories=X-GCAD-Forensique;
