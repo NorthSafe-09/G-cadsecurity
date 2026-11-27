@@ -65,37 +65,20 @@ jobs:
           OWNER="$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')"
           echo "IMAGE_REF=ghcr.io/${OWNER}/gcad:latest" >> "$GITHUB_OUTPUT"
 
-      - name: Télécharger l'image G-CAD Security
+      - name: Connexion au registre (image G-CAD)
         shell: bash
         run: |
           echo '${{ github.token }}' | sudo podman login ghcr.io -u '${{ github.actor }}' --password-stdin
-          sudo podman pull '${{ steps.ref.outputs.IMAGE_REF }}'
 
-      - name: Construire l'environnement live
-        id: live
-        shell: bash
-        run: |
-          LIVE_IMAGE="localhost/gcad-live:${{ github.sha }}"
-          # L'image est exportée en archive et montée en lecture seule dans la
-          # construction : rien n'est copié dans les couches de l'image live.
-          sudo podman save --format oci-archive -o "$RUNNER_TEMP/gcad.tar" '${{ steps.ref.outputs.IMAGE_REF }}'
-          sudo podman build \
-            --cap-add sys_admin \
-            --security-opt label=disable \
-            --volume "$RUNNER_TEMP/gcad.tar:/tmp/gcad.tar:ro" \
-            --build-arg IMAGE_REF='${{ steps.ref.outputs.IMAGE_REF }}' \
-            --tag "$LIVE_IMAGE" \
-            ./live
-          echo "LIVE_IMAGE=$LIVE_IMAGE" >> "$GITHUB_OUTPUT"
-          # Libère de la place pour la génération de l'ISO
-          sudo rm -f "$RUNNER_TEMP/gcad.tar"
-          sudo podman rmi '${{ steps.ref.outputs.IMAGE_REF }}' || true
-
+      # Même méthode que les ISO officielles de secureblue : l'outil embarque
+      # l'image dans la clé et exécute nos crochets de préparation.
       - name: Générer l'ISO
         id: iso
-        uses: ublue-os/titanoboa@main
+        uses: RoyalOughtness/titanoboa@609f1b3d51e6abd1f445896cf1e0556de9665690
         with:
-          image-ref: ${{ steps.live.outputs.LIVE_IMAGE }}
+          image-ref: ${{ steps.ref.outputs.IMAGE_REF }}
+          hook-pre-initramfs: ${{ github.workspace }}/live/hooks/pre-initramfs.sh
+          hook-post-rootfs: ${{ github.workspace }}/live/hooks/post-rootfs.sh
           iso-dest: ${{ github.workspace }}/sortie/gcad.iso
 
       - name: Somme de contrôle
