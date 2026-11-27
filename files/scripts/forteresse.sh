@@ -28,6 +28,15 @@ chmod 644 /etc/gcad/reglages.conf
 LIGNE='auth        optional      pam_exec.so expose_authtok quiet /usr/libexec/gcad/pam-garde'
 ajouter_pam() {  # ajouter_pam <fichier> <motif de la ligne après laquelle insérer>
     local f="$1" motif="$2"
+    # Fedora récent range les fichiers PAM par défaut dans /usr/lib/pam.d ;
+    # une copie dans /etc/pam.d les remplace (règle standard de PAM).
+    if [[ ! -f "$f" && -f "/usr/lib/pam.d/$(basename "$f")" ]]; then
+        cp "/usr/lib/pam.d/$(basename "$f")" "$f"
+    fi
+    if [[ ! -f "$f" ]]; then
+        echo "ERREUR : $f introuvable (ni dans /usr/lib/pam.d)" >&2
+        exit 1
+    fi
     grep -qF 'gcad/pam-garde' "$f" && return 0
     if ! grep -qE "$motif" "$f"; then
         echo "ERREUR : structure PAM inattendue dans $f (motif : $motif)" >&2
