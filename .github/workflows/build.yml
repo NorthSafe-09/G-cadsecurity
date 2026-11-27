@@ -94,7 +94,7 @@ jobs:
           sha256sum gcad.iso | tee gcad.iso.sha256
 
       - name: Publier l'ISO (téléchargeable 7 jours)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: gcad-iso
           retention-days: 7
