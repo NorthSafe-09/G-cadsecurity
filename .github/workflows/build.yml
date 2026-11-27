@@ -70,6 +70,9 @@ jobs:
         run: |
           echo '${{ github.token }}' | sudo podman login ghcr.io -u '${{ github.actor }}' --password-stdin
 
+      - name: Préparer le dossier de sortie
+        run: mkdir -p "${{ github.workspace }}/sortie"
+
       # Même méthode que les ISO officielles de secureblue : l'outil embarque
       # l'image dans la clé et exécute nos crochets de préparation.
       - name: Générer l'ISO
