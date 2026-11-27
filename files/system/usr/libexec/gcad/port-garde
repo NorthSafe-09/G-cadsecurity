@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+# Gardien d'un appareil USB bloqué.
+# Dès qu'une session est ouverte : fenêtre « Code requis » avec compte à rebours.
+#  - Appareil débranché         -> annulé, rien ne se passe
+#  - Bon code                   -> appareil autorisé
+#  - ESSAIS_PORT mauvais codes  -> effacement
+#  - Délai dépassé              -> effacement
+# Avant toute connexion (écran de connexion, démarrage) : l'appareil reste
+# bloqué et le compte à rebours ne démarre qu'à l'ouverture de session.
+set -uo pipefail
+source /usr/libexec/gcad/commun.sh
+
+K="$1"
+SYS="/sys/bus/usb/devices/$K"
+NOM="$(cat "$SYS/manufacturer" 2>/dev/null) $(cat "$SYS/product" 2>/dev/null)"
+NOM="${NOM# }"; NOM="${NOM:-appareil inconnu}"; NOM="${NOM//[<>&\"]/ }"
+TITRE="G-CAD Security — port $K"
+TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
+journal "Appareil bloqué : $NOM ($K)"
+
+branche() { [[ -e "$SYS" ]]; }
+fermer_fenetre() { pkill -f -- "--title=$TITRE" 2>/dev/null || true; }
+
+# Attend une session (l'appareil reste bloqué en attendant)
+until session_active >/dev/null; do
+    branche || { journal "Débranché avant connexion : $NOM"; exit 0; }
+    sleep 2
+done
+
+FIN=$(( $(date +%s) + DELAI_PORT ))
+ESSAIS=0
+PID=""
+
+while :; do
+    if ! branche; then
+        fermer_fenetre
+        journal "Débranché à temps, annulé : $NOM"
+        exit 0
+    fi
+
+    RESTE=$(( FIN - $(date +%s) ))
+    if (( RESTE <= 0 )); then
+        fermer_fenetre
+        /usr/libexec/gcad/effacer "appareil branché sans code : $NOM"
+        exit 0
+    fi
+
+    if [[ -z "$PID" ]] && S="$(session_active)"; then
+        : > "$TMP/code"
+        # shellcheck disable=SC2086
+        en_session $S yad --entry --hide-text --on-top --center --sticky \
+            --title="$TITRE" --window-icon=gcad --image=gcad \
+            --text="<b>Appareil branché : $NOM</b>\n\nTape le code des ports ou débranche-le.\nSinon, toutes les données seront effacées.\nEssais restants : $(( ESSAIS_PORT - ESSAIS ))" \
+            --timeout="$RESTE" --timeout-indicator=bottom \
+            --button="Valider:0" > "$TMP/code" 2>/dev/null &
+        PID=$!
+    fi
+
+    if [[ -n "$PID" ]] && ! kill -0 "$PID" 2>/dev/null; then
+        PID=""
+        CODE="$(head -1 "$TMP/code")"
+        if [[ -n "$CODE" ]]; then
+            if verifier_code "$CODE" "$GCAD_ETC/ports.hash"; then
+                echo 1 > "$SYS/authorized" 2>/dev/null
+                journal "Code correct, appareil autorisé : $NOM"
+                exit 0
+            fi
+            ESSAIS=$(( ESSAIS + 1 ))
+            journal "Mauvais code des ports ($ESSAIS/$ESSAIS_PORT) : $NOM"
+            if (( ESSAIS >= ESSAIS_PORT )); then
+                /usr/libexec/gcad/effacer "$ESSAIS mauvais codes des ports : $NOM"
+                exit 0
+            fi
+        fi
+    fi
+    sleep 1
+done

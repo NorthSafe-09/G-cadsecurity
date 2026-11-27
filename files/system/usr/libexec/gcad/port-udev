@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Appelé par udev à chaque branchement USB. Doit être très rapide.
+# Si le contrôle des ports est actif et que l'appareil n'est pas dans la liste
+# des appareils de confiance : il est bloqué immédiatement et le gardien démarre.
+K="$1"
+[[ "$K" == usb* ]] && exit 0            # contrôleurs internes (root hubs)
+source /usr/libexec/gcad/commun.sh
+[[ "$PORTS_ACTIF" == 1 ]] || exit 0
+
+SYS="/sys/bus/usb/devices/$K"
+ID="$(cat "$SYS/idVendor" 2>/dev/null):$(cat "$SYS/idProduct" 2>/dev/null):$(cat "$SYS/serial" 2>/dev/null)"
+if grep -qxF "$ID" "$GCAD_ETC/ports.autorises" 2>/dev/null; then
+    exit 0
+fi
+
+echo 0 > "$SYS/authorized" 2>/dev/null
+systemctl start --no-block "gcad-port@${K}.service"

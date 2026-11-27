@@ -1,0 +1,72 @@
+Bienvenue sur G-CAD Security
+============================
+
+G-CAD Security est basé sur secureblue (https://github.com/secureblue/secureblue), lui-même construit
+sur Fedora Atomic. G-CAD Security n'est affilié ni à GrapheneOS, ni à secureblue,
+ni au projet Fedora.
+
+Premiers pas
+------------
+1. Mets le système à jour :  ujust update  (ou laisse les mises à jour
+   automatiques faire leur travail, elles s'appliquent au redémarrage).
+2. Active Secure Boot avec la clé de secureblue (mot de passe MOK : secureblue) :
+   ujust enroll-secureblue-secure-boot-key
+   puis vérifie la configuration :  ujust audit-secureblue
+   Les autres étapes conseillées : https://secureblue.pages.dev/post-install
+3. Installe tes applications depuis Flathub (Logiciels) et vérifie leurs
+   permissions avec Flatseal.
+4. Utilise le navigateur Trivalent (Chromium renforcé) fourni par défaut.
+
+Protection de la vie privée
+---------------------------
+- Disque chiffré : tout ton disque est chiffré (LUKS). Sans ta phrase de
+  passe, personne ne peut lire tes fichiers, même en retirant le disque.
+- Photos sans métadonnées : toute image enregistrée dans ton dossier Images
+  (photos, captures d'écran…) perd automatiquement ses métadonnées (position
+  GPS, modèle d'appareil, date, logiciel). Seule l'orientation est gardée,
+  comme sur GrapheneOS.
+  Désactiver :  systemctl --user disable --now gcad-exif-auto.service
+  Réactiver  :  systemctl --user enable --now gcad-exif-auto.service
+- Autres fichiers (PDF, documents, vidéos, audio) : clic droit > Scripts >
+  « Nettoyer les métadonnées » crée une copie nettoyée.
+
+La forteresse (application « Centre G-CAD »)
+-------------------------------------------
+Tout est DÉSACTIVÉ et en mode TEST au départ. Règle chaque fonction, essaie-la
+en mode TEST (rien n'est effacé, un message s'affiche), puis arme la forteresse.
+AVANT D'ARMER : garde une sauvegarde de tes fichiers ailleurs. Un effacement
+détruit la clé du disque : les données sont perdues pour toujours.
+
+- Code de contrainte : un faux mot de passe. Tapé à l'écran de connexion ou de
+  verrouillage, il efface tout immédiatement.
+- Essais avant effacement : après N mauvais mots de passe d'affilée, tout est
+  effacé.
+- Contrôle des ports USB : tout appareil inconnu branché est bloqué. Tape le
+  code des ports ou débranche-le dans les 60 secondes, sinon tout est effacé
+  (3 mauvais codes = effacement). Écran verrouillé : déverrouille d'abord, la
+  fenêtre du code apparaît ensuite. Ne branche rien d'inconnu avant de t'être
+  connecté : l'appareil reste bloqué, et le compte à rebours démarre à la
+  connexion.
+- Pas d'Internet sans VPN : si le VPN se coupe, Internet se coupe.
+- Fake Travel : fausse position pour les applications. Pour les sites web,
+  connecte aussi ton VPN dans le même pays.
+
+Limites : le code de contrainte et le compteur d'essais ne s'appliquent pas au
+mot de passe du disque demandé au démarrage (seulement à la session).
+Journal des événements : /var/log/gcad.log
+
+Mises à jour de sécurité
+------------------------
+Les correctifs viennent des équipes Fedora et des projets d'origine (noyau
+Linux, navigateur…), le durcissement de l'équipe secureblue. G-CAD Security les
+reconstruit chaque jour et ton PC les installe tout seul : redémarre
+régulièrement pour les appliquer.
+
+Si une mise à jour pose problème
+--------------------------------
+Au démarrage, choisis l'entrée précédente dans le menu : le système revient
+exactement à la version d'avant. Ensuite :  rpm-ostree rollback
+
+Code source
+-----------
+https://github.com/TON-PSEUDO/gcad

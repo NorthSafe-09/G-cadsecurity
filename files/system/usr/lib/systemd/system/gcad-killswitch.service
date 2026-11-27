@@ -1,0 +1,14 @@
+[Unit]
+Description=G-CAD Security : pas d'Internet sans VPN
+DefaultDependencies=no
+Before=network-pre.target
+Wants=network-pre.target
+After=local-fs.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/libexec/gcad/killswitch-appliquer
+
+[Install]
+WantedBy=multi-user.target

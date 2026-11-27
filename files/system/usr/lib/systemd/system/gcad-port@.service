@@ -1,0 +1,7 @@
+[Unit]
+Description=G-CAD Security : gardien du port USB %i
+After=systemd-logind.service
+
+[Service]
+Type=simple
+ExecStart=/usr/libexec/gcad/port-garde %i

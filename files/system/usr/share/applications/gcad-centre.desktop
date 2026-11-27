@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Centre G-CAD
+Comment=Réglages de la forteresse : code de contrainte, ports, VPN, effacement
+Exec=gcad-centre
+Icon=gcad
+Categories=Settings;Security;
+Keywords=sécurité;effacement;contrainte;ports;usb;vpn;

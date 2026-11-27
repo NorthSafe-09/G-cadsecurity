@@ -1,0 +1,63 @@
+// G-CAD Security : écran de démarrage et demande du mot de passe du disque.
+// L'affiche est centrée sur fond noir ; la zone de saisie s'affiche par-dessus.
+
+Window.SetBackgroundTopColor(0, 0, 0);
+Window.SetBackgroundBottomColor(0, 0, 0);
+
+sw = Window.GetWidth();
+sh = Window.GetHeight();
+
+fond_img = Image("fond.png");
+echelle = sh / fond_img.GetHeight();
+fond = Sprite(fond_img.Scale(fond_img.GetWidth() * echelle, sh));
+fond.SetX(sw / 2 - fond_img.GetWidth() * echelle / 2);
+fond.SetY(0);
+fond.SetZ(-10);
+
+// Boîte de saisie (dessinée au milieu, sur la zone sombre de l'affiche)
+boite_l = 360;
+boite_h = 96;
+bx = sw / 2 - boite_l / 2;
+by = sh * 0.80 - boite_h / 2;
+
+cadre = Sprite(Image("boite.png"));
+cadre.SetOpacity(0);
+
+titre = Sprite();
+puces = Sprite();
+message = Sprite();
+
+fun afficher_mdp(invite, nb_puces) {
+    cadre.SetPosition(bx, by, 10);
+    cadre.SetOpacity(1);
+
+    t = Image.Text("Mot de passe du disque", 1, 0.15, 0.15, 1, "Sans Bold 14");
+    titre.SetImage(t);
+    titre.SetPosition(sw / 2 - t.GetWidth() / 2, by + 14, 11);
+    titre.SetOpacity(1);
+
+    texte = "";
+    for (i = 0; i < nb_puces && i < 32; i++)
+        texte += "●";
+    if (texte == "") texte = " ";
+    p = Image.Text(texte, 1, 1, 1, 1, "Sans 18");
+    puces.SetImage(p);
+    puces.SetPosition(sw / 2 - p.GetWidth() / 2, by + 50, 11);
+    puces.SetOpacity(1);
+}
+
+fun mode_normal() {
+    cadre.SetOpacity(0);
+    titre.SetOpacity(0);
+    puces.SetOpacity(0);
+}
+
+fun afficher_message(texte) {
+    m = Image.Text(texte, 1, 1, 1, 1, "Sans 12");
+    message.SetImage(m);
+    message.SetPosition(sw / 2 - m.GetWidth() / 2, sh - 40, 12);
+}
+
+Plymouth.SetDisplayPasswordFunction(afficher_mdp);
+Plymouth.SetDisplayNormalFunction(mode_normal);
+Plymouth.SetMessageFunction(afficher_message);

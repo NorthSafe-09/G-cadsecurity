@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# G-CAD Security : supprime automatiquement les métadonnées EXIF/XMP/IPTC (GPS, appareil,
+# date, logiciel…) des images qui arrivent dans le dossier Images, comme
+# l'appareil photo de GrapheneOS. Seule l'orientation est conservée, pour que
+# l'image s'affiche dans le bon sens. Sans perte de qualité (pas de ré-encodage).
+#
+# Désactiver :  systemctl --user disable --now gcad-exif-auto.service
+set -uo pipefail
+
+DOSSIER="$(xdg-user-dir PICTURES 2>/dev/null || echo "$HOME/Images")"
+[[ -d "$DOSSIER" ]] || mkdir -p "$DOSSIER"
+
+a_des_metadonnees() {
+    # Liste les balises EXIF/XMP/IPTC sauf l'orientation ; vide = déjà propre
+    exiftool -q -q -s -s -EXIF:all -XMP:all -IPTC:all "$1" 2>/dev/null \
+        | grep -v -E '^(Orientation|ExifByteOrder):' | grep -q .
+}
+
+nettoyer() {
+    local f="$1"
+    case "${f,,}" in
+        *.jpg|*.jpeg|*.png|*.webp|*.tif|*.tiff|*.heic|*.heif|*.avif) ;;
+        *) return ;;
+    esac
+    [[ -f "$f" ]] || return
+    a_des_metadonnees "$f" || return
+    exiftool -q -q -overwrite_original -all= -tagsfromfile @ -Orientation "$f" \
+        && echo "Métadonnées supprimées : $f"
+}
+
+# Nettoie d'abord ce qui est déjà là, puis surveille les nouveaux fichiers
+while IFS= read -r -d '' f; do nettoyer "$f"; done \
+    < <(find "$DOSSIER" -type f -print0)
+
+inotifywait -m -r -q -e close_write -e moved_to --format '%w%f' "$DOSSIER" |
+while IFS= read -r f; do
+    nettoyer "$f"
+done

@@ -1,0 +1,124 @@
+#!/usr/bin/env bash
+# Centre G-CAD : réglages de la forteresse (interface graphique).
+# Chaque modification demande le mot de passe administrateur.
+source /usr/libexec/gcad/commun.sh
+
+ROOT=(pkexec /usr/libexec/gcad/centre-root)
+YAD=(yad --center --window-icon=gcad --image=gcad --title="Centre G-CAD")
+
+recharger() { source /usr/libexec/gcad/commun.sh; }
+oui_non() { [[ "$1" == 1 ]] && echo "activé" || echo "désactivé"; }
+erreur() { "${YAD[@]}" --image=dialog-error --text="$1" --button="OK:0"; }
+
+etat() {
+    recharger
+    local m; [[ "$MODE" == arme ]] && m="<span color='red'><b>ARMÉ</b></span> (effacement réel)" || m="<b>TEST</b> (simulation, rien n'est effacé)"
+    local e; [[ "$MAX_ESSAIS" -gt 0 ]] && e="effacement après $MAX_ESSAIS mauvais mots de passe" || e="désactivé"
+    echo "Mode : $m
+Code de contrainte : $(oui_non "$CONTRAINTE_ACTIF")
+Essais de mot de passe : $e
+Contrôle des ports : $(oui_non "$PORTS_ACTIF") (code ou débranchement en $DELAI_PORT s, $ESSAIS_PORT essais)
+Pas d'Internet sans VPN : $(oui_non "$KILLSWITCH")"
+}
+
+regler_mode() {
+    local choix
+    choix=$("${YAD[@]}" --form --text="<b>Mode de la forteresse</b>\n\nEn mode TEST, chaque déclenchement est seulement affiché.\nEn mode ARMÉ, la clé du disque est détruite : <b>toutes les données sont perdues pour toujours</b>.\nFais tous tes essais en mode TEST avant d'armer." \
+        --field="Mode:CB" "TEST (simulation)!ARMÉ (effacement réel)" --button="Annuler:1" --button="Enregistrer:0") || return
+    if [[ "$choix" == ARMÉ* ]]; then
+        "${YAD[@]}" --image=dialog-warning --text="<b>Armer la forteresse ?</b>\n\nAs-tu une sauvegarde de tes fichiers ailleurs ?\nUn déclenchement effacera TOUT, sans retour possible." \
+            --button="Non:1" --button="Oui, armer:0" || return
+        "${ROOT[@]}" regler MODE=arme
+    else
+        "${ROOT[@]}" regler MODE=simulation
+    fi
+}
+
+demander_code() {  # demander_code <titre>  -> affiche le code sur la sortie
+    local r a b
+    r=$("${YAD[@]}" --form --text="$1" --field="Code:H" "" --field="Confirmer:H" "" --button="Annuler:1" --button="Enregistrer:0") || return 1
+    a="$(cut -d'|' -f1 <<<"$r")"; b="$(cut -d'|' -f2 <<<"$r")"
+    [[ "$a" == "$b" ]] || { erreur "Les deux codes ne correspondent pas."; return 1; }
+    printf '%s\n' "$a"
+}
+
+regler_contrainte() {
+    local r
+    r=$("${YAD[@]}" --form --text="<b>Code de contrainte</b>\n\nSi ce code est tapé à la place du mot de passe (connexion ou\nécran de verrouillage), tout est effacé immédiatement.\nIl doit être différent de ton mot de passe." \
+        --field="Activer:CHK" "$([[ $CONTRAINTE_ACTIF == 1 ]] && echo TRUE || echo FALSE)" \
+        --field="Changer le code:CHK" "FALSE" --button="Annuler:1" --button="Enregistrer:0") || return
+    local actif changer; actif=$(cut -d'|' -f1 <<<"$r"); changer=$(cut -d'|' -f2 <<<"$r")
+    if [[ "$changer" == TRUE || ( "$actif" == TRUE && ! -e "$GCAD_ETC/contrainte.hash" ) ]]; then
+        local c; c=$(demander_code "<b>Nouveau code de contrainte</b> (4 caractères minimum)") || return
+        printf '%s\n' "$c" | "${ROOT[@]}" code contrainte || { erreur "Code refusé (trop court ou identique à un mot de passe)."; return; }
+    fi
+    "${ROOT[@]}" regler CONTRAINTE_ACTIF="$([[ $actif == TRUE ]] && echo 1 || echo 0)"
+}
+
+regler_essais() {
+    local r
+    r=$("${YAD[@]}" --form --text="<b>Essais avant effacement</b>\n\nNombre de mauvais mots de passe d'affilée (connexion, verrouillage,\nconsole) avant l'effacement. 0 = désactivé." \
+        --field="Nombre d'essais:NUM" "${MAX_ESSAIS}!0..50!1" --button="Annuler:1" --button="Enregistrer:0") || return
+    "${ROOT[@]}" regler MAX_ESSAIS="$(cut -d'|' -f1 <<<"$r" | cut -d. -f1 | cut -d, -f1)"
+}
+
+regler_ports() {
+    local r
+    r=$("${YAD[@]}" --form --text="<b>Contrôle des ports USB</b>\n\nTout nouvel appareil branché est bloqué. Il faut taper le code des ports\nou le débrancher avant la fin du délai, sinon tout est effacé.\nLes appareils branchés <b>maintenant</b> (clavier, souris, webcam interne…)\nsont mémorisés comme appareils de confiance.\n\nÉcran verrouillé : la fenêtre du code n'apparaît qu'après déverrouillage." \
+        --field="Activer:CHK" "$([[ $PORTS_ACTIF == 1 ]] && echo TRUE || echo FALSE)" \
+        --field="Délai (secondes):NUM" "${DELAI_PORT}!15..300!5" \
+        --field="Mauvais codes permis:NUM" "${ESSAIS_PORT}!1..10!1" \
+        --field="Changer le code des ports:CHK" "FALSE" \
+        --field="Mémoriser les appareils branchés maintenant:CHK" "TRUE" \
+        --button="Annuler:1" --button="Enregistrer:0") || return
+    IFS='|' read -r actif delai essais changer memo _ <<<"$r"
+    if [[ "$changer" == TRUE || ( "$actif" == TRUE && ! -e "$GCAD_ETC/ports.hash" ) ]]; then
+        local c; c=$(demander_code "<b>Code des ports</b> (4 caractères minimum)") || return
+        printf '%s\n' "$c" | "${ROOT[@]}" code ports || { erreur "Code refusé."; return; }
+    fi
+    [[ "$memo" == TRUE ]] && "${ROOT[@]}" ports-confiance
+    "${ROOT[@]}" regler PORTS_ACTIF="$([[ $actif == TRUE ]] && echo 1 || echo 0)" \
+        DELAI_PORT="${delai%%[.,]*}" ESSAIS_PORT="${essais%%[.,]*}"
+}
+
+regler_vpn() {
+    local r
+    r=$("${YAD[@]}" --form --width=480 --text="<b>Pas d'Internet sans VPN</b>\n\nQuand c'est activé, rien ne sort de l'ordinateur hors du tunnel VPN :\nsi le VPN se coupe, Internet se coupe.\nLes applications VPN (Proton, Mullvad…) fonctionnent directement.\nPour un fichier WireGuard/OpenVPN, ajoute l'adresse IP de ton serveur." \
+        --field="Activer:CHK" "$([[ $KILLSWITCH == 1 ]] && echo TRUE || echo FALSE)" \
+        --field="Autoriser le réseau local (imprimante…):CHK" "$([[ $LAN_AUTORISE == 1 ]] && echo TRUE || echo FALSE)" \
+        --field="Adresses IP des serveurs VPN (séparées par des espaces)" "$(tr '\n' ' ' < "$GCAD_ETC/vpn.serveurs" 2>/dev/null)" \
+        --button="Annuler:1" --button="Enregistrer:0") || return
+    IFS='|' read -r actif lan serveurs _ <<<"$r"
+    tr ' ' '\n' <<<"$serveurs" | "${ROOT[@]}" vpn-serveurs
+    "${ROOT[@]}" regler KILLSWITCH="$([[ $actif == TRUE ]] && echo 1 || echo 0)" LAN_AUTORISE="$([[ $lan == TRUE ]] && echo 1 || echo 0)"
+    "${ROOT[@]}" appliquer
+}
+
+while :; do
+    recharger
+    choix=$("${YAD[@]}" --list --width=520 --height=480 --no-headers \
+        --text="<b>G-CAD Security</b>\n\n$(etat)\n\nDouble-clique sur un réglage :" \
+        --column=Réglage \
+        "Mode : test ou armé" \
+        "Code de contrainte" \
+        "Essais avant effacement" \
+        "Contrôle des ports USB" \
+        "Pas d'Internet sans VPN" \
+        "Fake Travel (fausse position)" \
+        "Tester un déclenchement (simulation)" \
+        --button="Fermer:1" --button="Ouvrir:0") || exit 0
+    case "${choix%|}" in
+        "Mode : test ou armé") regler_mode ;;
+        "Code de contrainte") regler_contrainte ;;
+        "Essais avant effacement") regler_essais ;;
+        "Contrôle des ports USB") regler_ports ;;
+        "Pas d'Internet sans VPN") regler_vpn ;;
+        "Fake Travel (fausse position)") gcad-fake-travel ;;
+        "Tester un déclenchement (simulation)")
+            if [[ "$MODE" == arme ]]; then
+                erreur "Passe d'abord en mode TEST : en mode ARMÉ, le test effacerait tout."
+            else
+                pkexec /usr/libexec/gcad/effacer "test manuel depuis le Centre G-CAD"
+            fi ;;
+    esac
+done

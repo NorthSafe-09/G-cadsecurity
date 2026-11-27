@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+# Fake Travel : donne une fausse position à l'ordinateur.
+#  - Les applications qui demandent la position (cartes, météo, navigateur via
+#    le service de localisation) reçoivent la ville choisie.
+#  - Option : le fuseau horaire passe à celui de la ville.
+#  - Les sites web voient surtout ton adresse IP : connecte ton VPN à un serveur
+#    du même pays pour que tout concorde.
+YAD=(yad --center --window-icon=gcad --image=gcad --title="Fake Travel")
+
+VILLES=(
+"Paris|48.8566|2.3522|Europe/Paris"
+"Londres|51.5072|-0.1276|Europe/London"
+"Berlin|52.5200|13.4050|Europe/Berlin"
+"Zurich|47.3769|8.5417|Europe/Zurich"
+"Madrid|40.4168|-3.7038|Europe/Madrid"
+"New York|40.7128|-74.0060|America/New_York"
+"Miami|25.7617|-80.1918|America/New_York"
+"Los Angeles|34.0522|-118.2437|America/Los_Angeles"
+"Montréal|45.5019|-73.5674|America/Toronto"
+"Toronto|43.6532|-79.3832|America/Toronto"
+"Vancouver|49.2827|-123.1207|America/Vancouver"
+"Mexico|19.4326|-99.1332|America/Mexico_City"
+"São Paulo|-23.5505|-46.6333|America/Sao_Paulo"
+"Dubaï|25.2048|55.2708|Asia/Dubai"
+"Tokyo|35.6762|139.6503|Asia/Tokyo"
+"Singapour|1.3521|103.8198|Asia/Singapore"
+"Sydney|-33.8688|151.2093|Australia/Sydney"
+"Le Cap|-33.9249|18.4241|Africa/Johannesburg"
+)
+
+liste=""
+for v in "${VILLES[@]}"; do liste+="${v%%|*}!"; done
+liste+="Coordonnées personnalisées"
+
+r=$("${YAD[@]}" --form --width=460 \
+    --text="<b>Fake Travel</b>\n\nChoisis où l'ordinateur doit croire qu'il se trouve.\nPour les sites web, connecte aussi ton VPN dans ce pays." \
+    --field="Destination:CB" "$liste" \
+    --field="Latitude (si personnalisé)" "" \
+    --field="Longitude (si personnalisé)" "" \
+    --field="Changer aussi le fuseau horaire:CHK" "TRUE" \
+    --button="Revenir à ma vraie position:2" --button="Annuler:1" --button="Voyager:0")
+code=$?
+
+if [[ $code -eq 2 ]]; then
+    pkexec /usr/libexec/gcad/centre-root faketravel off &&
+        notify-send -i gcad "Fake Travel" "Position réelle rétablie."
+    exit 0
+fi
+[[ $code -eq 0 ]] || exit 0
+
+IFS='|' read -r dest lat lon fuseau _ <<<"$r"
+tz="-"
+if [[ "$dest" != "Coordonnées personnalisées" ]]; then
+    for v in "${VILLES[@]}"; do
+        IFS='|' read -r nom la lo z <<<"$v"
+        [[ "$nom" == "$dest" ]] && { lat="$la"; lon="$lo"; tz="$z"; }
+    done
+fi
+[[ "$fuseau" == TRUE ]] || tz="-"
+
+if pkexec /usr/libexec/gcad/centre-root faketravel "$lat" "$lon" "$tz"; then
+    notify-send -i gcad "Fake Travel" "Position simulée : $dest"
+else
+    "${YAD[@]}" --image=dialog-error --text="Impossible d'appliquer cette position (coordonnées invalides ?)." --button="OK:0"
+fi

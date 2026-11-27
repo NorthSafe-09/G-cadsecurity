@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Clic droit sur des fichiers > Scripts > Nettoyer les métadonnées
+# Crée une copie nettoyée (fichier.cleaned.ext) à côté de chaque original.
+# Fonctionne avec les photos, PDF, documents bureautiques, audio, vidéo…
+IFS=$'\n'
+for f in $NAUTILUS_SCRIPT_SELECTED_FILE_PATHS; do
+    [[ -f "$f" ]] && mat2 "$f"
+done
+notify-send "Métadonnées" "Copies nettoyées créées (.cleaned)" 2>/dev/null || true

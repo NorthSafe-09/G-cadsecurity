@@ -1,0 +1,14 @@
+# Environnement "live" de la clé USB : on démarre dessus pour essayer G-CAD Security,
+# puis on l'installe sur le disque avec l'installateur Anaconda.
+# Construit avec : sudo podman build --cap-add sys_admin --security-opt label=disable \
+#   --build-arg IMAGE_REF=ghcr.io/<pseudo>/gcad:latest ...
+# Adapté de l'exemple Bazzite de Titanoboa (https://github.com/ublue-os/titanoboa, Apache-2.0).
+
+ARG IMAGE_REF=ghcr.io/TON-PSEUDO/gcad:latest
+FROM ${IMAGE_REF}
+ARG IMAGE_REF
+ENV IMAGE_REF=${IMAGE_REF}
+
+COPY ./src /src
+RUN --mount=type=cache,target=/var/tmp/libdnf5,id=libdnf5 /src/build.sh
+RUN rm -rf /src

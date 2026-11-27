@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Fake Travel
+Comment=Donner une fausse position à l'ordinateur
+Exec=gcad-fake-travel
+Icon=gcad
+Categories=Utility;Security;
+Keywords=position;localisation;voyage;gps;vpn;

@@ -1,0 +1,42 @@
+---
+# yaml-language-server: $schema=https://schema.blue-build.org/recipe-v1.json
+# L'image sera publiée sur ghcr.io/<ton-pseudo-github>/gcad
+name: gcad
+description: G-CAD Security, un système de bureau renforcé basé sur secureblue (Fedora Atomic).
+
+# Base : secureblue, la variante GNOME (Silverblue) durcie.
+# hardened_malloc, navigateur Trivalent, noyau et sysctl renforcés,
+# mises à jour atomiques avec retour arrière.
+# Pour une carte NVIDIA, remplace par : ghcr.io/secureblue/silverblue-nvidia-open-hardened
+base-image: ghcr.io/secureblue/silverblue-main-hardened
+image-version: latest
+
+modules:
+  # Copie files/system/* à la racine de l'image
+  - type: files
+    files:
+      - source: system
+        destination: /
+
+  # Paquets officiels Fedora : métadonnées, interface, démarrage, pare-feu
+  - type: dnf
+    install:
+      packages:
+        - perl-Image-ExifTool # nettoyage EXIF sans perte (photos)
+        - mat2 # nettoyage de tous types de fichiers (PDF, documents, audio…)
+        - inotify-tools # surveillance du dossier Images
+        - xdg-user-dirs
+        - yad # fenêtres du Centre G-CAD, du code des ports et de Fake Travel
+        - plymouth-plugin-script # écran de mot de passe au démarrage
+        - nftables # coupe-circuit VPN
+
+  # Image de marque, confidentialité par défaut, forteresse
+  - type: script
+    scripts:
+      - branding.sh
+      - confidentialite.sh
+      - forteresse.sh
+
+  # Installe la politique de signature pour que les PC clients
+  # n'acceptent que les mises à jour signées avec TA clé
+  - type: signing

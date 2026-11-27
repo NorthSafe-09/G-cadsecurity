@@ -1,0 +1,13 @@
+[Unit]
+Description=G-CAD Security : suppression automatique des métadonnées des photos
+After=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/gcad-exif-auto
+Restart=on-failure
+RestartSec=10
+Nice=10
+
+[Install]
+WantedBy=default.target

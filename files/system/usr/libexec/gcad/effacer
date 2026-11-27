@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# G-CAD Security : EFFACEMENT D'URGENCE
+# Détruit les clés de chiffrement de tous les disques chiffrés (LUKS), puis coupe
+# l'alimentation. Les données deviennent illisibles pour toujours : IRRÉVERSIBLE.
+# En mode « simulation », rien n'est effacé : l'événement est seulement noté et affiché.
+# Usage : effacer "<raison>"
+set -uo pipefail
+source /usr/libexec/gcad/commun.sh
+
+RAISON="${1:-inconnue}"
+
+if [[ "$MODE" != "arme" ]]; then
+    journal "SIMULATION — effacement qui aurait eu lieu : $RAISON"
+    prevenir "Test : l'effacement aurait été déclenché ($RAISON). Mode simulation, rien n'a été effacé."
+    exit 0
+fi
+
+journal "EFFACEMENT — $RAISON"
+sync
+
+# 1. Détruit les emplacements de clés de chaque volume LUKS
+while read -r dev type; do
+    [[ "$type" == "crypto_LUKS" ]] || continue
+    cryptsetup luksErase --batch-mode "$dev" 2>/dev/null || \
+        cryptsetup erase --batch-mode "$dev" 2>/dev/null || true
+done < <(lsblk -rpno NAME,FSTYPE)
+
+# 2. Coupe immédiatement (la clé encore en mémoire disparaît avec le courant)
+echo 1 > /proc/sys/kernel/sysrq 2>/dev/null || true
+echo o > /proc/sysrq-trigger 2>/dev/null || true
+systemctl poweroff --force --force

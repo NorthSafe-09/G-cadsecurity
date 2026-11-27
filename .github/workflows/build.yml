@@ -1,0 +1,104 @@
+name: gcad
+
+on:
+  schedule:
+    - cron: "00 07 * * *" # image mise à jour chaque jour (correctifs de sécurité)
+  push:
+    branches: [main]
+    paths-ignore:
+      - "**.md"
+  workflow_dispatch:
+    inputs:
+      construire_iso:
+        description: "Construire aussi l'ISO pour les clés USB"
+        type: boolean
+        default: true
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  image:
+    name: Construire l'image G-CAD Security
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    steps:
+      - name: Construire et signer l'image
+        uses: blue-build/github-action@v1.13
+        with:
+          recipe: recipe.yml
+          cosign_private_key: ${{ secrets.SIGNING_SECRET }}
+          registry_token: ${{ github.token }}
+          maximize_build_space: true
+
+  iso:
+    name: Construire l'ISO (clé USB live + installation)
+    needs: image
+    if: github.event_name == 'workflow_dispatch' && inputs.construire_iso
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - name: Libérer de l'espace disque
+        uses: ublue-os/remove-unwanted-software@v9
+        with:
+          remove-codeql: true
+
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v4
+
+      - name: Référence de l'image
+        id: ref
+        shell: bash
+        run: |
+          OWNER="$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')"
+          echo "IMAGE_REF=ghcr.io/${OWNER}/gcad:latest" >> "$GITHUB_OUTPUT"
+
+      - name: Télécharger l'image G-CAD Security
+        shell: bash
+        run: |
+          echo '${{ github.token }}' | sudo podman login ghcr.io -u '${{ github.actor }}' --password-stdin
+          sudo podman pull '${{ steps.ref.outputs.IMAGE_REF }}'
+
+      - name: Construire l'environnement live
+        id: live
+        shell: bash
+        run: |
+          LIVE_IMAGE="localhost/gcad-live:${{ github.sha }}"
+          sudo podman build \
+            --cap-add sys_admin \
+            --security-opt label=disable \
+            --volume /var/lib/containers/storage:/usr/lib/containers/storage:ro \
+            --build-arg IMAGE_REF='${{ steps.ref.outputs.IMAGE_REF }}' \
+            --tag "$LIVE_IMAGE" \
+            ./live
+          echo "LIVE_IMAGE=$LIVE_IMAGE" >> "$GITHUB_OUTPUT"
+
+      - name: Générer l'ISO
+        id: iso
+        uses: ublue-os/titanoboa@main
+        with:
+          image-ref: ${{ steps.live.outputs.LIVE_IMAGE }}
+          iso-dest: ${{ github.workspace }}/sortie/gcad.iso
+
+      - name: Somme de contrôle
+        shell: bash
+        run: |
+          cd sortie
+          sha256sum gcad.iso | tee gcad.iso.sha256
+
+      - name: Publier l'ISO (téléchargeable 7 jours)
+        uses: actions/upload-artifact@v4
+        with:
+          name: gcad-iso
+          retention-days: 7
+          compression-level: 0
+          if-no-files-found: error
+          path: |
+            sortie/gcad.iso
+            sortie/gcad.iso.sha256

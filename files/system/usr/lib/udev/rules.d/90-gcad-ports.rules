@@ -1,0 +1,2 @@
+# G-CAD Security : contrôle des ports USB (voir /usr/libexec/gcad/port-udev)
+ACTION=="add", SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", RUN+="/usr/libexec/gcad/port-udev %k"

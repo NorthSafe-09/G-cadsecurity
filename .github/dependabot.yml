@@ -1,0 +1,10 @@
+# Robot de GitHub : propose automatiquement une mise à jour (pull request)
+# quand un outil utilisé par la construction de G-CAD Security sort une nouvelle version.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "maj"

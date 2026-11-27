@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+# Coupe-circuit VPN : si actif, rien ne sort de l'ordinateur sauf
+#  - par un tunnel VPN (interfaces tun*, wg*, tap*, ppp*, proton*, mullvad*, nordlynx)
+#  - vers les serveurs VPN (pour établir la connexion)
+#  - DHCP et découverte IPv6 (pour obtenir une adresse réseau)
+#  - le réseau local, seulement si autorisé dans les réglages
+# VPN coupé = Internet coupé. Aucune fuite DNS possible hors du tunnel.
+set -uo pipefail
+source /usr/libexec/gcad/commun.sh
+
+LAN_AUTORISE="${LAN_AUTORISE:-0}"
+TABLE=gcad_killswitch
+
+nft delete table inet "$TABLE" 2>/dev/null || true
+if [[ "$KILLSWITCH" != 1 ]]; then
+    journal "Coupe-circuit VPN : désactivé"
+    exit 0
+fi
+
+V4=(); V6=()
+while read -r ligne; do
+    ligne="${ligne%%#*}"; ligne="${ligne// /}"
+    [[ -n "$ligne" ]] || continue
+    if [[ "$ligne" == *:* ]]; then V6+=("$ligne"); else V4+=("$ligne"); fi
+done < <(cat "$GCAD_ETC/vpn.serveurs" 2>/dev/null)
+
+{
+echo "table inet $TABLE {"
+echo "  chain sortie {"
+echo "    type filter hook output priority -10; policy drop;"
+echo "    oifname \"lo\" accept"
+for i in "tun*" "wg*" "tap*" "ppp*" "proton*" "mullvad*" "nordlynx"; do
+    echo "    oifname \"$i\" accept"
+done
+echo "    udp sport 68 udp dport 67 accept"
+echo "    udp sport 546 udp dport 547 accept"
+echo "    icmpv6 type { nd-router-solicit, nd-neighbor-solicit, nd-neighbor-advert } accept"
+(( ${#V4[@]} )) && echo "    ip daddr { $(IFS=,; echo "${V4[*]}") } accept"
+(( ${#V6[@]} )) && echo "    ip6 daddr { $(IFS=,; echo "${V6[*]}") } accept"
+# Applications VPN (Proton, Mullvad…) qui choisissent leur serveur : ports VPN standards
+echo "    udp dport { 51820, 1194 } accept"
+if [[ "$LAN_AUTORISE" == 1 ]]; then
+    echo "    ip daddr { 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16 } accept"
+    echo "    ip6 daddr fe80::/10 accept"
+fi
+echo "    counter reject"
+echo "  }"
+echo "}"
+} > /run/gcad-killswitch.nft
+
+if nft -f /run/gcad-killswitch.nft; then
+    journal "Coupe-circuit VPN : actif"
+else
+    journal "ERREUR coupe-circuit VPN : règles refusées"
+    exit 1
+fi

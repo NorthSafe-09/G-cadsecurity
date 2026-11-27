@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# Appelé par PAM (pam_exec, expose_authtok) après chaque saisie de mot de passe
+# sur l'écran de connexion, l'écran de verrouillage et la console.
+#  - Code de contrainte tapé  -> effacement
+#  - Mauvais mot de passe     -> compteur +1 ; au seuil -> effacement
+#  - Bon mot de passe         -> compteur remis à zéro
+# Sort toujours avec 0 : ne change jamais le résultat de la connexion.
+source /usr/libexec/gcad/commun.sh
+
+IFS= read -r -d '' MDP || true
+UTIL="${PAM_USER:-}"
+[[ -n "$MDP" && -n "$UTIL" ]] || exit 0
+
+mkdir -p "$GCAD_VAR"; chmod 700 "$GCAD_VAR"
+COMPTEUR="$GCAD_VAR/echecs"
+
+# 1. Code de contrainte
+if [[ "$CONTRAINTE_ACTIF" == 1 ]] && verifier_code "$MDP" "$GCAD_ETC/contrainte.hash"; then
+    systemd-run --quiet --collect /usr/libexec/gcad/effacer "code de contrainte tapé ($UTIL)"
+    exit 0
+fi
+
+# 2. Compteur d'essais
+[[ "$MAX_ESSAIS" =~ ^[0-9]+$ && "$MAX_ESSAIS" -gt 0 ]] || exit 0
+
+if printf '%s\0' "$MDP" | /usr/sbin/unix_chkpwd "$UTIL" nullok >/dev/null 2>&1; then
+    echo 0 > "$COMPTEUR"
+    exit 0
+fi
+
+N=$(( $(cat "$COMPTEUR" 2>/dev/null || echo 0) + 1 ))
+echo "$N" > "$COMPTEUR"
+journal "Mauvais mot de passe pour $UTIL ($N/$MAX_ESSAIS)"
+if (( N >= MAX_ESSAIS )); then
+    echo 0 > "$COMPTEUR"
+    systemd-run --quiet --collect /usr/libexec/gcad/effacer "$N mauvais mots de passe ($UTIL)"
+fi
+exit 0

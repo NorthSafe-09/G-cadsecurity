@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=G-CAD Security
+Description=Écran de démarrage et de déverrouillage du disque G-CAD Security
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/gcad
+ScriptFile=/usr/share/plymouth/themes/gcad/gcad.script
