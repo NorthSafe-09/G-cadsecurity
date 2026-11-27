@@ -80,22 +80,18 @@ GitHub (gratuit)                                   Toi                    Tes cl
 
 ## Mise en route (une seule fois)
 
-1. **Crée un compte GitHub**, puis un nouveau dépôt **public** appelé `gcad`, et envoies-y
-   tous les fichiers de ce dossier.
-2. **Crée ta clé de signature** (sur un PC Linux ou Mac avec [cosign](https://docs.sigstore.dev/cosign/system_config/installation/)) :
-   ```bash
-   COSIGN_PASSWORD="" cosign generate-key-pair
-   ```
-   - Remplace le fichier `cosign.pub` du dépôt par le tien (envoie-le sur GitHub).
-   - Dans GitHub : *Settings → Secrets and variables → Actions → New repository secret*,
-     nom `SIGNING_SECRET`, valeur = le contenu de `cosign.key`.
-   - **Garde `cosign.key` précieusement et ne la publie jamais** : c'est elle qui garantit
-     que seules TES mises à jour sont acceptées par les PC de tes clients.
-3. **Lance la première construction** : onglet *Actions → gcad → Run workflow*
-   (laisse « Construire aussi l'ISO » coché). Compte environ 1 h à 1 h 30.
-4. **Rends l'image publique** : sur ton profil GitHub, *Packages → gcad → Package settings →
-   Change visibility → Public*. Sans ça, les PC de tes clients ne pourront pas se mettre à jour.
-5. Dans `files/system/usr/share/gcad/BIENVENUE.txt`, remplace `TON-PSEUDO` par ton pseudo GitHub.
+Dépôt : https://github.com/NorthSafe-09/G-cadsecurity · Image : `ghcr.io/northsafe-09/gcad`
+
+1. **Clé de signature** : la clé publique `cosign.pub` est déjà dans le dépôt. Sa clé privée
+   (`cosign.key`, jamais publiée) va dans *Settings → Secrets and variables → Actions →
+   New repository secret*, nom `SIGNING_SECRET`. **Garde une copie de `cosign.key` en lieu sûr** :
+   c'est elle qui garantit que seules TES mises à jour sont acceptées par les PC de tes clients.
+2. **Construction** : chaque envoi sur `main` reconstruit l'image. Pour fabriquer aussi l'ISO :
+   *Actions → gcad → Run workflow*, ou une étiquette `vX.Y` (par exemple `v1.0`).
+   Compte environ 1 h à 1 h 30.
+3. **Rends l'image publique** (une seule fois, après la 1re construction) : sur ton profil GitHub,
+   *Packages → gcad → Package settings → Change visibility → Public*. Sans ça, les PC de tes
+   clients ne pourront pas se mettre à jour.
 
 Ensuite, l'image se reconstruit **chaque jour** avec les derniers correctifs de secureblue et
 Fedora, et les PC installés les récupèrent tout seuls.

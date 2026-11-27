@@ -5,6 +5,7 @@ on:
     - cron: "00 07 * * *" # image mise à jour chaque jour (correctifs de sécurité)
   push:
     branches: [main]
+    tags: ["v*"] # une étiquette vX.Y construit aussi l'ISO
     paths-ignore:
       - "**.md"
   workflow_dispatch:
@@ -38,7 +39,7 @@ jobs:
   iso:
     name: Construire l'ISO (clé USB live + installation)
     needs: image
-    if: github.event_name == 'workflow_dispatch' && inputs.construire_iso
+    if: (github.event_name == 'workflow_dispatch' && inputs.construire_iso) || startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-24.04
     permissions:
       contents: read
