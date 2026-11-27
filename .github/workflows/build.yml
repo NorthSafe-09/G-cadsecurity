@@ -70,9 +70,6 @@ jobs:
         run: |
           echo '${{ github.token }}' | sudo podman login ghcr.io -u '${{ github.actor }}' --password-stdin
 
-      - name: Préparer le dossier de sortie
-        run: mkdir -p "${{ github.workspace }}/sortie"
-
       # Même méthode que les ISO officielles de secureblue : l'outil embarque
       # l'image dans la clé et exécute nos crochets de préparation.
       - name: Générer l'ISO
@@ -82,11 +79,13 @@ jobs:
           image-ref: ${{ steps.ref.outputs.IMAGE_REF }}
           hook-pre-initramfs: ${{ github.workspace }}/live/hooks/pre-initramfs.sh
           hook-post-rootfs: ${{ github.workspace }}/live/hooks/post-rootfs.sh
-          iso-dest: ${{ github.workspace }}/sortie/gcad.iso
+          iso-dest: ${{ runner.temp }}/gcad.iso
 
       - name: Somme de contrôle
         shell: bash
         run: |
+          mkdir -p sortie
+          cp "${{ steps.iso.outputs.iso-dest }}" sortie/gcad.iso
           cd sortie
           sha256sum gcad.iso | tee gcad.iso.sha256
 
