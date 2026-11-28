@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Interface du mode anonyme G-CAD (tout le PC passe par Tor, comme AnonSurf).
+YAD=(yad --center --window-icon=gcad --image=gcad --title="Mode anonyme G-CAD")
+etat=$(systemctl is-active --quiet gcad-anonyme-tor.service && echo actif || echo inactif)
+
+if [[ "$etat" == actif ]]; then
+    "${YAD[@]}" --text="<b>Mode anonyme : ACTIF</b>\nTout ton trafic passe par Tor.\n\nLe désactiver ?" \
+        --button="Garder actif:1" --button="Désactiver:0" || exit 0
+    run0 /usr/libexec/gcad/anonyme off >/dev/null &&
+        "${YAD[@]}" --text="Mode anonyme <b>désactivé</b>.\nConnexion normale (VPN si le coupe-circuit est actif)." --button="OK:0"
+else
+    "${YAD[@]}" --width=480 --text="<b>Mode anonyme : inactif</b>\n\nEn l'activant, <b>tout le PC</b> passe par le réseau Tor :\n• ton adresse IP est cachée\n• aucune fuite DNS\n• tout ce qui ne peut pas passer par Tor est bloqué\n\nInternet sera plus lent. Pour une protection maximale, connecte d'abord ton VPN (Tor passera dans le VPN).\nPour naviguer, utilise de préférence Tor Browser." \
+        --button="Annuler:1" --button="Activer:0" || exit 0
+    if run0 /usr/libexec/gcad/anonyme on >/dev/null; then
+        "${YAD[@]}" --text="Mode anonyme <b>ACTIF</b>.\nLa connexion à Tor peut prendre jusqu'à une minute.\nVérifie sur : check.torproject.org" --button="OK:0"
+    else
+        "${YAD[@]}" --text="<b>Échec</b> : le mode anonyme n'a pas pu démarrer. Ta connexion n'a pas été modifiée." --button="OK:0"
+    fi
+fi

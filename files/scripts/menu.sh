@@ -6,7 +6,13 @@ set -euo pipefail
 cat > /etc/dconf/db/local.d/60-gcad-menu <<'FIN'
 [org/gnome/shell]
 enabled-extensions=['dash-to-panel@jderose9.github.com', 'arcmenu@arcmenu.com', 'places-menu@gnome-shell-extensions.gcampax.github.com']
-favorite-apps=['gcad-centre.desktop', 'gcad-bac-a-sable.desktop', 'gcad-claude.desktop', 'org.gnome.Boxes.desktop', 'io.github.kolunmi.Bazaar.desktop', 'trivalent.desktop', 'org.gnome.Nautilus.desktop', 'org.gnome.Ptyxis.desktop', 'org.gnome.Settings.desktop']
+favorite-apps=['gcad-centre.desktop', 'gcad-bac-a-sable.desktop', 'gcad-anonyme.desktop', 'gcad-claude.desktop', 'org.gnome.Boxes.desktop', 'io.github.kolunmi.Bazaar.desktop', 'trivalent.desktop', 'org.gnome.Nautilus.desktop', 'org.gnome.Ptyxis.desktop', 'org.gnome.Settings.desktop']
+
+[org/gnome/desktop/interface]
+enable-animations=false
+
+[org/gnome/desktop/search-providers]
+disable-external=true
 
 [org/gnome/shell/extensions/dash-to-panel]
 panel-positions='{"0":"BOTTOM"}'
@@ -27,3 +33,6 @@ dconf update || true
 systemctl enable ollama.service 2>/dev/null || true
 # Alpaca s'installe tout seul à la première connexion de chaque utilisateur
 systemctl --global enable gcad-ia-alpaca.service || true
+
+# Le mode anonyme (Tor global) démarre à la demande depuis l'app ; on crée juste l'utilisateur système
+systemd-sysusers /usr/lib/sysusers.d/gcad-tor.conf || true

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Mode anonyme (Tor)
+Comment=Faire passer tout le PC par Tor, comme AnonSurf sur Parrot OS
+Exec=gcad-anonyme
+Icon=security-high
+Categories=X-GCAD-ViePrivee;
+Keywords=anonsurf;tor;anonyme;ip;

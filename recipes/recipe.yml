@@ -39,6 +39,7 @@ modules:
       skip-unavailable: true
       packages:
         - keepassxc # coffre de mots de passe hors ligne
+        - tor # démon Tor pour le mode anonyme global (type AnonSurf)
         - torbrowser-launcher # Tor Browser officiel
         - onionshare # partage de fichiers par Tor
         - nmap

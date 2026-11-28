@@ -20,6 +20,9 @@ done
 for u in rpm-ostreed-automatic.timer rpm-ostree-countme.service rpm-ostree-countme.timer bootloader-update.service; do
     systemctl disable "$u" 2>/dev/null || :
 done
+# Alléger la session d'essai : pas d'indexation ni de mise à jour antivirus au démarrage
+systemctl --global mask tracker-miner-fs-3.service tracker-miner-fs-control-3.service tracker-extract-3.service 2>/dev/null || :
+systemctl disable clamav-freshclam.service clamav-freshclam.timer 2>/dev/null || :
 
 # L'installateur doit pouvoir lire l'image embarquée (session d'essai seulement :
 # le système installé garde sa politique de signature stricte).
